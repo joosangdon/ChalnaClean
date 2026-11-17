@@ -1,0 +1,7 @@
+﻿flask
+opencv-python
+pillow
+ImageHash
+cryptography
+python-dotenv
+pytest
