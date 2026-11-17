@@ -1,0 +1,13 @@
+﻿# 가상환경 및 캐시 제외
+venv/
+__pycache__/
+
+# 보안 환경변수(마스터 키) 및 암호화 보관함 제외
+.env
+encrypted_storage/
+
+# 완성본 임시 백업 및 테스트용 원본 이미지 제외
+_backup/
+*.jpg
+*.jpeg
+*.png
