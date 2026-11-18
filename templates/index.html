@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>찰나정리 (ChalnaClean) - 스마트 사진 정리 및 보안 보관함</title>
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --danger: #dc2626;
+      --warning: #d97706;
+      --success: #059669;
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: #e2e8f0;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Pretendard", "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding: 2rem;
+    }
+    .container { max-width: 1100px; margin: 0 auto; }
+    header {
+      margin-bottom: 2rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 1rem;
+    }
+    header h1 { font-size: 1.75rem; font-weight: 700; color: var(--text); }
+    header p { color: var(--muted); font-size: 0.95rem; margin-top: 0.25rem; }
+
+    .section-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1.75rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .section-header h2 { font-size: 1.2rem; font-weight: 600; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.55rem 1.1rem;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:hover { background: var(--primary-hover); }
+    .btn-outline { background: #fff; border-color: var(--border); color: var(--text); }
+    .btn-outline:hover { background: #f1f5f9; }
+    .btn-success { background: var(--success); color: #fff; }
+    .btn-success:hover { opacity: 0.92; }
+
+    .upload-zone {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    input[type="file"] {
+      padding: 0.5rem;
+      border: 1px dashed var(--border);
+      border-radius: 8px;
+      background: #f8fafc;
+      flex: 1;
+    }
+
+    .photo-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+    .photo-card {
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      background: #fff;
+      transition: border-color 0.15s ease;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+    .photo-card.selected { border-color: var(--primary); background: #eff6ff; }
+    .photo-card img {
+      width: 100%;
+      height: 160px;
+      object-fit: cover;
+      background: #e2e8f0;
+    }
+    .photo-info { padding: 0.75rem; font-size: 0.85rem; flex: 1; }
+    .photo-title {
+      font-weight: 600;
+      margin-bottom: 0.4rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .badge-group { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.5rem; }
+    .badge {
+      padding: 0.15rem 0.5rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .badge-ok { background: #dcfce7; color: #166534; }
+    .badge-blur { background: #fee2e2; color: #991b1b; }
+    .badge-sim { background: #fef3c7; color: #92400e; }
+
+    .checkbox-bar {
+      padding: 0.5rem 0.75rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .vault-layout {
+      display: grid;
+      grid-template-columns: 1fr 1.2fr;
+      gap: 1.5rem;
+    }
+    @media (max-width: 768px) {
+      .vault-layout { grid-template-columns: 1fr; }
+    }
+    .vault-list {
+      list-style: none;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      max-height: 360px;
+      overflow-y: auto;
+    }
+    .vault-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.9rem;
+    }
+    .vault-item:last-child { border-bottom: none; }
+    .preview-box {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      min-height: 280px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      background: #f8fafc;
+      text-align: center;
+    }
+    .preview-box img {
+      max-width: 100%;
+      max-height: 320px;
+      border-radius: 6px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .status-msg {
+      margin-top: 0.75rem;
+      font-size: 0.9rem;
+      color: var(--primary);
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>찰나정리 (ChalnaClean)</h1>
+      <p>OpenCV 흐림 감지 · pHash 유사 사진 탐지 · EXIF 제거 및 AES-256-GCM 인메모리 보안 보관함</p>
+    </header>
+
+    <!-- 1단계: 업로드 및 인메모리 분석 -->
+    <section class="section-card">
+      <div class="section-header">
+        <h2>1. 다중 사진 업로드 및 품질·유사도 분석</h2>
+      </div>
+      <div class="upload-zone">
+        <input type="file" id="photoInput" multiple accept="image/*" />
+        <button class="btn btn-primary" onclick="analyzePhotos()">인메모리 분석 시작</button>
+      </div>
+      <div id="analyzeStatus" class="status-msg"></div>
+
+      <!-- 2 & 3단계: 분석 결과 확인 및 선택 암호화 -->
+      <div id="analysisResultArea" style="display: none; margin-top: 1.5rem;">
+        <div class="section-header">
+          <h2>2. 분석 결과 확인 및 암호화 보관 대상 선택</h2>
+          <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            <button class="btn btn-outline" onclick="autoSelectCleanPhotos()">정상·고유 사진만 자동 선택</button>
+            <button class="btn btn-success" onclick="encryptSelectedPhotos()">선택 사진 EXIF 제거 및 AES-256-GCM 암호화 보관</button>
+          </div>
+        </div>
+        <div id="photoGrid" class="photo-grid"></div>
+      </div>
+    </section>
+
+    <!-- 4단계: 암호화 보관함 및 인메모리 복호화 스트리밍 -->
+    <section class="section-card">
+      <div class="section-header">
+        <h2>3. AES-256-GCM 보안 보관함 (encrypted_storage/)</h2>
+        <button class="btn btn-outline" onclick="loadVaultList()">보관함 새로고침</button>
+      </div>
+      <div class="vault-layout">
+        <div>
+          <ul id="vaultList" class="vault-list">
+            <li class="vault-item" style="color: var(--muted);">보관된 암호화 파일(.enc)이 없습니다.</li>
+          </ul>
+        </div>
+        <div class="preview-box" id="streamPreviewBox">
+          <p style="color: var(--muted); font-size: 0.9rem;">
+            왼쪽 목록에서 <strong>.enc 파일</strong>의 [복호화 열람] 버튼을 클릭하면<br/>
+            디스크에 평문을 남기지 않고 메모리(BytesIO)에서 즉시 복호화 스트리밍합니다.
+          </p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    let currentAnalyzedList = [];
+
+    async function analyzePhotos() {
+      const input = document.getElementById("photoInput");
+      const statusEl = document.getElementById("analyzeStatus");
+      if (!input.files || input.files.length === 0) {
+        alert("분석할 사진 파일을 먼저 선택해 주세요.");
+        return;
+      }
+
+      const formData = new FormData();
+      for (const file of input.files) {
+        formData.append("photos", file);
+      }
+
+      statusEl.textContent = "메모리 상에서 Laplacian 분산(흐림도) 및 pHash 해밍 거리를 계산 중입니다...";
+
+      try {
+        const res = await fetch("/api/analyze", { method: "POST", body: formData });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "분석 중 오류 발생");
+
+        currentAnalyzedList = data.results;
+        renderPhotoGrid(currentAnalyzedList);
+        statusEl.textContent = `총 ${currentAnalyzedList.length}장의 사진 분석 완료 (원본 평문은 디스크에 저장되지 않음).`;
+      } catch (err) {
+        statusEl.textContent = "오류: " + err.message;
+      }
+    }
+
+    function renderPhotoGrid(items) {
+      const area = document.getElementById("analysisResultArea");
+      const grid = document.getElementById("photoGrid");
+      grid.innerHTML = "";
+      area.style.display = "block";
+
+      items.forEach((item) => {
+        const card = document.createElement("div");
+        card.className = "photo-card selected";
+        card.id = `card-${item.temp_id}`;
+
+        let badgesHtml = "";
+        if (item.is_low_quality) {
+          const reason = item.is_blurry ? "흐림 감지" : "저해상도";
+          badgesHtml += `<span class="badge badge-blur">저화질 (${reason})</span>`;
+        } else {
+          badgesHtml += `<span class="badge badge-ok">화질 양호</span>`;
+        }
+
+        if (item.is_similar) {
+          badgesHtml += `<span class="badge badge-sim">유사 그룹 #${item.group_id}</span>`;
+        }
+
+        card.innerHTML = `
+          <img src="${item.thumbnail_b64}" alt="${item.filename}" />
+          <div class="photo-info">
+            <div class="photo-title" title="${item.filename}">${item.filename}</div>
+            <div>해상도: ${item.width} × ${item.height}</div>
+            <div>흐림 점수(Laplacian): <strong>${item.blur_score}</strong></div>
+            <div>pHash: <code>${item.phash_str}</code></div>
+            <div class="badge-group">${badgesHtml}</div>
+          </div>
+          <label class="checkbox-bar">
+            <input type="checkbox" class="photo-check" value="${item.temp_id}" checked onchange="toggleCardHighlight('${item.temp_id}', this.checked)" />
+            암호화 보관 선택
+          </label>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    function toggleCardHighlight(tempId, isChecked) {
+      const card = document.getElementById(`card-${tempId}`);
+      if (card) {
+        card.classList.toggle("selected", isChecked);
+      }
+    }
+
+    function autoSelectCleanPhotos() {
+      const seenGroups = new Set();
+      currentAnalyzedList.forEach((item) => {
+        let shouldSelect = !item.is_low_quality;
+        if (item.is_similar) {
+          if (seenGroups.has(item.group_id)) {
+            shouldSelect = false; // 동일 유사 그룹에서는 첫 번째 사진만 남김
+          } else if (shouldSelect) {
+            seenGroups.add(item.group_id);
+          }
+        }
+        const checkbox = document.querySelector(`.photo-check[value="${item.temp_id}"]`);
+        if (checkbox) {
+          checkbox.checked = shouldSelect;
+          toggleCardHighlight(item.temp_id, shouldSelect);
+        }
+      });
+    }
+
+    async function encryptSelectedPhotos() {
+      const checkedBoxes = document.querySelectorAll(".photo-check:checked");
+      const tempIds = Array.from(checkedBoxes).map((cb) => cb.value);
+
+      if (tempIds.length === 0) {
+        alert("암호화 보관할 사진을 최소 1장 이상 선택해 주세요.");
+        return;
+      }
+
+      try {
+        const res = await fetch("/api/encrypt", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ temp_ids: tempIds }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "암호화 실패");
+
+        alert(data.message);
+        document.getElementById("analysisResultArea").style.display = "none";
+        document.getElementById("photoInput").value = "";
+        loadVaultList();
+      } catch (err) {
+        alert("암호화 오류: " + err.message);
+      }
+    }
+
+    async function loadVaultList() {
+      const listEl = document.getElementById("vaultList");
+      try {
+        const res = await fetch("/api/vault");
+        const data = await res.json();
+        const files = data.vault_files || [];
+
+        if (files.length === 0) {
+          listEl.innerHTML = `<li class="vault-item" style="color: var(--muted);">보관된 암호화 파일(.enc)이 없습니다.</li>`;
+          return;
+        }
+
+        listEl.innerHTML = "";
+        files.forEach((f) => {
+          const li = document.createElement("li");
+          li.className = "vault-item";
+          li.innerHTML = `
+            <div>
+              <strong>${f.filename}</strong>
+              <span style="color: var(--muted); font-size: 0.8rem; margin-left: 0.4rem;">(${f.size_kb} KB)</span>
+            </div>
+            <button class="btn btn-primary" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;" onclick="streamDecryptedImage('${f.filename}')">
+              복호화 열람
+            </button>
+          `;
+          listEl.appendChild(li);
+        });
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    function streamDecryptedImage(filename) {
+      const previewBox = document.getElementById("streamPreviewBox");
+      const streamUrl = `/api/vault/view/${encodeURIComponent(filename)}?t=${Date.now()}`;
+      previewBox.innerHTML = `
+        <div style="margin-bottom: 0.5rem; font-size: 0.85rem; color: var(--success); font-weight: 600;">
+          ✓ GCM 무결성 태그 검증 통과 및 인메모리(BytesIO) 스트리밍 완료 (${filename})
+        </div>
+        <img src="${streamUrl}" alt="Decrypted Stream" />
+      `;
+    }
+
+    // 초기 로드 시 보관함 목록 조회
+    window.addEventListener("DOMContentLoaded", loadVaultList);
+  </script>
+</body>
+</html>
