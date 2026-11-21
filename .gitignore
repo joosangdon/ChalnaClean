@@ -11,3 +11,5 @@ _backup/
 *.jpg
 *.jpeg
 *.png
+
+.pytest_cache/
