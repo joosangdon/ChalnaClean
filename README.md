@@ -41,7 +41,7 @@ ChalnaClean/
 ## 🛡️ 핵심 보안 설계 및 트러블슈팅 성과
 
 ### 1. 암호화 파이프라인 리팩토링 (Base64 v1 → 순수 바이너리 v2)
-* **문제 상황:** 초기 프로토타입에서 원본 이미지를 Base64 텍스트로 직렬화한 뒤 암호화한 결과, 5.00 MB 고해상도 이미지 기준 암호문 크기가 **8.89 MB (+77.8%)**로 팽창하고 다중 처리 시 메모리 복사·I/O 지연(`36.49 ms`)이 발생함.
+* **문제 상황:** 초기 프로토타입에서 원본 이미지를 Base64 텍스트로 직렬화한 뒤 암호화한 결과, 5.00 MB 고해상도 이미지 기준 암호문 크기가 **8.89 MB (+77.8%)** 로 팽창하고 다중 처리 시 메모리 복사·I/O 지연(`36.49 ms`)이 발생함.
 * **해결 방법:** 불필요한 Base64 계층을 제거하고 **`[12B 고유 Nonce] + [Ciphertext] + [16B GMAC Auth Tag]`** 순수 바이너리 스트림 포맷으로 리팩토링.
 * **정량적 개선 결과 (5.00 MB 단일 이미지 기준):**
   * 암호문 저장 용량: `8.89 MB → 5.00 MB (+28 Bytes)` (**43.7% 절감**, 불필요한 용량 팽창 0%)
@@ -59,7 +59,7 @@ ChalnaClean/
 
 ### 1. 환경 구성 및 패키지 설치
 ```bash
-git clone [https://github.com/joosangdon/ChalnaClean.git](https://github.com/joosangdon/ChalnaClean.git)
+git clone https://github.com/joosangdon/ChalnaClean.git
 cd ChalnaClean
 python -m venv venv
 .\venv\Scripts\Activate.ps1
@@ -74,7 +74,7 @@ python -c "import os, base64; print('AES_MASTER_KEY=' + base64.urlsafe_b64encode
 
 ### 3. 웹 서버 구동 및 보안 검증 테스트 실행
 ```bash
-# 1) Flask 웹 애플리케이션 실행 ([http://127.0.0.1:5000](http://127.0.0.1:5000))
+# 1) Flask 웹 애플리케이션 실행 http://127.0.0.1:5000
 python app.py
 
 # 2) 5대 보안·무결성 자동화 테스트 실행
